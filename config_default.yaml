@@ -1,0 +1,9 @@
+# 天則観報告ツール設定ファイル
+# かならず文字コードは UTF-8 または UTF-8N で保存してください。
+# メモ帳でも編集・保存できます
+--- 
+account: 
+  name: 
+  password: 
+database: 
+  file_path: ../*.db
