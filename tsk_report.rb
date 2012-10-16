@@ -14,10 +14,10 @@ require 'lib/tenco_reporter/config_util'
 include TencoReporter::ConfigUtil
 require 'lib/tenco_reporter/track_record_util'
 include TencoReporter::TrackRecordUtil
-require 'lib/tenco_reporter/stdout_utf8_to_cp932_converter'
+require 'lib/tenco_reporter/stdout_to_cp932_converter'
 
 # プログラム情報
-PROGRAM_VERSION = '0.04'
+PROGRAM_VERSION = '0.03b'
 PROGRAM_NAME = '天則観報告ツール'
 
 # 設定

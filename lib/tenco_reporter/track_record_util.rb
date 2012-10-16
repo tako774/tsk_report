@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'sqlite3'
 require 'rexml/document'
 require 'kconv'

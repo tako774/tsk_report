@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'nkf'
 
 # convert $stdout to cp932
@@ -9,5 +8,4 @@ if !defined?($stdout._write)
       _write NKF.nkf('-sxm0 --cp932', str.to_s)
     end
   end
-#  puts "overrode $stdout.write"
 end
