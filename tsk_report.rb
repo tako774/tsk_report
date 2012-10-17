@@ -17,7 +17,7 @@ include TencoReporter::TrackRecordUtil
 require 'lib/tenco_reporter/stdout_to_cp932_converter'
 
 # プログラム情報
-PROGRAM_VERSION = '0.03b'
+PROGRAM_VERSION = '0.03c'
 PROGRAM_NAME = '天則観報告ツール'
 
 # 設定
@@ -43,6 +43,7 @@ is_force_insert = false # 強制インサートモード。はじめは false。
 is_all_report = false # 全件報告モード。サーバーからの最終対戦時刻をとらず、全件送信。
 
 # 変数
+latest_version = nil # クライアントの最新バージョン
 trackrecord = [] # 対戦結果
 is_warning_exist = false # 警告メッセージがあるかどうか
 
@@ -99,11 +100,57 @@ begin
   SERVER_LAST_TRACK_RECORD_PATH = env['server']['last_track_record']['path'].to_s
   SERVER_ACCOUNT_HOST = env['server']['account']['host'].to_s
   SERVER_ACCOUNT_PATH = env['server']['account']['path'].to_s
+  CLIENT_LATEST_VERSION_HOST = env['client']['latest_version']['host'].to_s
+  CLIENT_LATEST_VERSION_PATH = env['client']['latest_version']['path'].to_s
+  CLIENT_SITE_URL = "http://#{env['client']['site']['host']}#{env['client']['site']['path']}"
 
-  ### バージョンチェック ###
+  ### クライアント最新バージョンチェック ###
 
-  # :TODO
-
+  # puts "★クライアント最新バージョン自動チェック"
+  # puts 
+  
+  def get_latest_version(latest_version_host, latest_version_path)
+    response = nil
+    Net::HTTP.new(latest_version_host, 80).start do |s|
+      response = s.get(latest_version_path, HTTP_REQUEST_HEADER)
+    end  
+    response.code == '200' ? response.body.strip : nil
+  end
+  
+  begin
+    latest_version = get_latest_version(CLIENT_LATEST_VERSION_HOST, CLIENT_LATEST_VERSION_PATH)
+    
+    case
+    when latest_version.nil?
+      # puts "！最新バージョンの取得に失敗しました。（サーバーからのレスポンスコード：#{response.code}）"
+      # puts "スキップして続行します。"
+    when latest_version > PROGRAM_VERSION then
+      puts "★新しいバージョンの#{PROGRAM_NAME}が公開されています。（ver.#{latest_version}）"
+      puts "ブラウザを開いて確認しますか？（Nを入力するとスキップ）"
+      print "> "
+      case gets[0..0]
+      when "N" then
+        puts "スキップして続行します。"
+        puts 
+      else
+        system "start #{CLIENT_SITE_URL}"
+        exit
+      end
+    when latest_version <= PROGRAM_VERSION then
+      # puts "お使いのバージョンは最新です。"
+      # puts 
+    end
+    
+  rescue => ex
+    puts "！クライアント最新バージョン自動チェック中にエラーが発生しました。"
+    puts ex.to_s
+    # puts ex.backtrace.join("\n")
+    puts ex.class
+    puts
+    puts "スキップして処理を続行します。"
+    puts
+  end
+    
   ### メイン処理 ###
 
   ## オプション設定
