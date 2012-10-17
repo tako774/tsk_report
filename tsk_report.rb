@@ -122,7 +122,7 @@ begin
     
     case
     when latest_version.nil?
-      # puts "！最新バージョンの取得に失敗しました。（サーバーからのレスポンスコード：#{response.code}）"
+      # puts "！最新バージョンの取得に失敗しました。"
       # puts "スキップして続行します。"
     when latest_version > PROGRAM_VERSION then
       puts "★新しいバージョンの#{PROGRAM_NAME}が公開されています。（ver.#{latest_version}）"
