@@ -1,3 +1,5 @@
+# coding: utf-8
+
 require 'sqlite3'
 require 'rexml/document'
 require 'kconv'
