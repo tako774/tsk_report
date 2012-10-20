@@ -2,7 +2,6 @@
 
 require 'sqlite3'
 require 'rexml/document'
-require 'kconv'
 require 'nkf'
 require 'time'
 
@@ -14,7 +13,7 @@ module TencoReporter
       trackrecord = []
       
       db_files.each do |db_file|
-        puts "#{NKF.nkf('-Sw --cp932', db_file)} から対戦結果を抽出...\n"
+        puts "#{NKF.nkf('-Swxm0 --cp932', db_file)} から対戦結果を抽出...\n"
         begin
           trackrecord.concat(_read_trackrecord(db_file, last_report_time + 1))
         rescue => ex
@@ -49,8 +48,8 @@ module TencoReporter
       trackrecord.each do |t|
         #t['p1name'] = NKF.nkf('-Swxm0 --cp932', t['p1name'])
         #t['p2name'] = NKF.nkf('-Swxm0 --cp932', t['p2name'])
-        t['p1name'] = t['p1name'].kconv(Kconv::UTF8, Kconv::SJIS)
-        t['p2name'] = t['p2name'].kconv(Kconv::UTF8, Kconv::SJIS)
+        t['p1name'] = NKF.nkf('-Swm0 --cp932', t['p1name'])
+        t['p2name'] = NKF.nkf('-Swm0 --cp932', t['p2name'])
       end
       
       return trackrecord
@@ -64,7 +63,7 @@ module TencoReporter
     def _read_trackrecord(db_file_cp932, last_report_time = Time.at(0))
       
       trackrecord = []
-      db_file_utf8 = NKF.nkf('-Sw --cp932', db_file_cp932)
+      db_file_utf8 = NKF.nkf('-Swxm0 --cp932', db_file_cp932)
       
       # DB接続
       # DBファイルがなければ例外発生
@@ -88,8 +87,7 @@ module TencoReporter
           db = SQLite3::Database.open(db_file_utf8)
           # SQLite3 モジュールの UTF16 ファイル名対応をONにした場合の読み込み
           # ただ、UTF16対応の必要なファイル名だと、テーブル名が見つからないなど、データが読めないことがある。理由は謎。
-          # require 'nkf'
-          # db = SQLite3::Database.open(NKF.nkf('-S -w16' ,db_file), {:utf16 => true})
+          # db = SQLite3::Database.open(NKF.nkf('-Sw16xm0 --cp932' ,db_file), {:utf16 => true})
           db.results_as_hash = true
         rescue => ex
           raise <<-MSG

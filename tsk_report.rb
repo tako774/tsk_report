@@ -1,7 +1,6 @@
 # coding: utf-8
 
 require 'rubygems'
-require 'kconv'
 require 'nkf'
 require 'net/http'
 Net::HTTP.version_1_2

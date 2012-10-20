@@ -7,9 +7,8 @@ module TencoReporter
 
     # ファイルからコンフィグをロード
     def load_config(config_file)
-      # 設定ファイルの UTF-8 に対応するため、一旦 Kconv を通して UTF-8N にする。
-      config = YAML.load(File.read(config_file).kconv(Kconv::UTF8, Kconv::UTF8))
-      
+      # 設定ファイルの UTF-8 に対応するため、一旦 UTF-8N に変換する。
+      config = YAML.load(NKF.nkf('-wxm0', File.read(config_file)))
       # to_yaml をマルチバイト文字対応
       class << config
         alias :_to_yaml :to_yaml
