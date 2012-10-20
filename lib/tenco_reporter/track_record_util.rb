@@ -11,7 +11,8 @@ module TencoReporter
     # 試合結果データ読み込み
     def read_trackrecord(db_files, last_report_time = Time.at(0))
       trackrecord = []
-      
+      is_warning_exist = false
+
       db_files.each do |db_file|
         puts "#{NKF.nkf('-Swxm0 --cp932', db_file)} から対戦結果を抽出...\n"
         begin
@@ -52,7 +53,7 @@ module TencoReporter
         t['p2name'] = NKF.nkf('-Swm0 --cp932', t['p2name'])
       end
       
-      return trackrecord
+      return trackrecord, is_warning_exist
       
     end
   

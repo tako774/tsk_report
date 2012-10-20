@@ -44,6 +44,7 @@ is_all_report = false # 全件報告モード。サーバーからの最終対�
 # 変数
 latest_version = nil # クライアントの最新バージョン
 trackrecord = [] # 対戦結果
+is_read_trackrecord_warning = false # 対戦結果読み込み時に警告があったかどうか
 is_warning_exist = false # 警告メッセージがあるかどうか
 
 puts "*** #{PROGRAM_NAME} ***"
@@ -424,7 +425,8 @@ begin
   db_files = Dir::glob(NKF.nkf('-Wsxm0 --cp932', db_file_path))
 
   if db_files.length > 0
-    trackrecord = read_trackrecord(db_files, last_report_time + 1)
+    trackrecord, is_read_trackrecord_warning = read_trackrecord(db_files, last_report_time + 1)
+    is_warning_exist = true if is_read_trackrecord_warning
   else
     raise <<-MSG
 #{config_file} に設定された#{RECORD_SW_NAME}データベースファイルが見つかりません。
