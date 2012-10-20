@@ -13,7 +13,7 @@ module TencoReporter
       class << config
         alias :_to_yaml :to_yaml
         def to_yaml
-          _to_yaml.decode
+          _to_yaml.syck_unescape
         end
       end
       
@@ -40,9 +40,9 @@ class String
     false
   end
   
-  # YAML(syck) の to_yaml が UTF-8 日本語対応していないので
-  # デコードするためのメソッド
-  def decode
-    gsub(/\\x(\w{2})/){[Regexp.last_match.captures.first.to_i(16)].pack("C")}
+  # YAML(syck) の to_yaml が ASCII 範囲外の文字を 
+  # \x00 形式でエスケープするので、アンエスケープする
+  def syck_unescape
+    gsub(/\\x(\w{2})/) { [Regexp.last_match.captures.first.to_i(16)].pack("C") }
   end
 end
