@@ -16,7 +16,7 @@ include TencoReporter::TrackRecordUtil
 require './lib/tenco_reporter/stdout_to_cp932_converter'
 
 # プログラム情報
-PROGRAM_VERSION = '0.03c'
+PROGRAM_VERSION = '0.04'
 PROGRAM_NAME = '天則観報告ツール'
 
 # 設定
