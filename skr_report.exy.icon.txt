@@ -4,4 +4,4 @@ resource:
       width : 32
       height: 32
       color : 8
-      file  : tenco_report.ico
+      file  : skr_report.ico
