@@ -1,2 +1,2 @@
-tsk_report.exe -a
+skr_report.exe -a
 @pause

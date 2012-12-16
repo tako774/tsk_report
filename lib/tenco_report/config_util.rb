@@ -2,7 +2,7 @@
 
 require 'yaml'
 
-module TencoReporter
+module TencoReport
   module ConfigUtil
 
     # ファイルからコンフィグをロード
@@ -17,7 +17,7 @@ module TencoReporter
         end
       end
       
-      config
+      config || {}
     end
     
     # コンフィグファイル保存
