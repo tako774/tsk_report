@@ -3,5 +3,5 @@ resource:
     -
       width : 32
       height: 32
-      color : 8
+      color : 24
       file  : skr_report.ico
