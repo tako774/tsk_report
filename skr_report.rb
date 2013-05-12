@@ -18,7 +18,7 @@ include TencoReport::TrackRecordUtil
 require 'tenco_report/stdout_to_cp932_converter'
 
 # プログラム情報
-PROGRAM_VERSION = '0.00'
+PROGRAM_VERSION = '0.01'
 PROGRAM_NAME = '心綺楼体験版 対戦結果報告ツール'
 PAST_PROGRAM_NAME = '緋行跡報告ツール/天則観報告ツール'
 GAME_NAME = '東方心綺楼体験版'
@@ -575,6 +575,7 @@ begin
             puts "#{replay_file[:path]}"
             trackrecord = replay_file[:trackrecord]
             replay_path = replay_file[:path]
+            replay_body = nil
             
             # XML生成
             xml = REXML::Document.new
@@ -614,7 +615,7 @@ begin
             post_body += "--#{boundary}\r\n"
             post_body += "content-disposition: form-data; name=\"replay_file\"; filename=\"#{NKF.nkf('-Swxm0 --cp932', File.basename(replay_path))}\"\r\n"
             post_body += "\r\n"
-            post_body += "#{File.read(replay_path)}\r\n"
+            post_body += "#{File.open(replay_path, "rb") { |io| io.read }}\r\n"
             # 終端
             post_body += "--#{boundary}--\r\n"
             
