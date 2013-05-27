@@ -143,11 +143,11 @@ module TencoReport
     end
     
     # メタデータを展開する
-    def inflate_meta_data(meta_data)
+    def inflate_meta_data(data)
       idx = 21
-      compressed_len = get_meta_data_length(meta_data)
+      compressed_len = get_meta_data_length(data)
       
-      block_data = meta_data.slice(idx, compressed_len)
+      block_data = data.slice(idx, compressed_len)
       # zlib header : 78 9C
       if block_data.slice(0, 2) == "\x78\x9c".force_encoding('ASCII-8BIT') then
         inflate_data = Zlib::Inflate.inflate(block_data)
@@ -163,20 +163,23 @@ module TencoReport
       keys = %w(icon_dump icon inner_name name)
       keys.each do |key|
         search_key = key.force_encoding('ASCII-8BIT') + "\x10\x00\x00\x08".force_encoding('ASCII-8BIT')
-        idx = -1
-        while (idx = data.index(search_key, idx + 1)) do
+        idx = 0
+        while (idx = data.index(search_key, idx)) do
           idx += (key.bytesize + 4)
           len = data.slice(idx, 4).unpack("I")[0]
           idx += 4
           if key == "icon_dump" then
             # <width>,<height>,<unknown digit>,<body>
-            vals = data[idx, len].split(",")
-            # if masked with other byte, th135 will crash
-            vals[vals.size - 1] = "\x2F".force_encoding('ASCII-8BIT') * vals[vals.size - 1].bytesize
-            data[idx, len] = vals.join(",")
+            if /\A([^,]+,[^,]+,[^,]+,)(.+)\z/ =~ data[idx, len] then
+              # if masked with other byte, th135 may crash
+              data[idx, len] = $1 + "\x41".force_encoding('ASCII-8BIT') * $2.bytesize
+            else
+              # mask failed?
+            end
           else
             data[idx, len] = "\x00".force_encoding('ASCII-8BIT') * len
           end
+          idx += len
         end
       end
       data
