@@ -15,28 +15,32 @@ require 'tenco_report/config_util'
 include TencoReport::ConfigUtil
 require 'tenco_report/track_record_util'
 include TencoReport::TrackRecordUtil
+require 'tenco_report/replay_util'
+include TencoReport::ReplayUtil
+require 'tenco_report/http_util'
+include TencoReport::HttpUtil
 require 'tenco_report/stdout_to_cp932_converter'
 
 # プログラム情報
-PROGRAM_VERSION = '0.01'
-PROGRAM_NAME = '心綺楼体験版 対戦結果報告ツール'
-PAST_PROGRAM_NAME = '緋行跡報告ツール/天則観報告ツール'
-GAME_NAME = '東方心綺楼体験版'
+PROGRAM_VERSION = '0.02'
+PROGRAM_NAME = '綺録帖報告ツール'
+PAST_PROGRAM_NAME = '他ゲームの報告ツール'
+GAME_NAME = '東方心綺楼'
 GAME_REPLAY_CONFIG_FILE_NAME = 'config.ini'
 
 # デフォルト値
-game_id = 3    # ゲームID
+game_id = 3 # ゲームID
 DEFAULT_DATABASE_FILE_PATH = '../*.db' # データベースファイルパス
 
 # 設定
-TRACKRECORD_POST_SIZE = 250   # 一度に送信する対戦結果数
-DUPLICATION_LIMIT_TIME_SECONDS = 2   # タイムスタンプが何秒以内のデータを、重複データとみなすか
+TRACKRECORD_POST_SIZE = 250 # 一度に送信する対戦結果数
+DUPLICATION_LIMIT_TIME_SECONDS = 2 # タイムスタンプが何秒以内のデータを、重複データとみなすか
 ACCOUNT_NAME_REGEX = /\A[a-zA-Z0-9_]{1,32}\z/
 MAIL_ADDRESS_REGEX = /\A[\x01-\x7F]+@(([-a-z0-9]+\.)*[a-z]+|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\])\z/ # メールアドレスチェック用正規表現
 PASSWORD_REGEX = /\A[!-~]{8,16}\z/
 PLEASE_RETRY_FORCE_INSERT = "<Please Retry in Force-Insert Mode>"  # 強制インサートリトライのお願い文字列
 HTTP_REQUEST_HEADER = {"User-Agent" => "Tenco Report Tool/#{PROGRAM_VERSION} GAME ID #{game_id}"}
-RECORD_SW_NAME = '東方心綺楼体験版 対戦記録自動集計プログラム' # 対戦記録ソフトウェア名
+RECORD_SW_NAME = '綺録帖' # 対戦記録ソフトウェア名
 DB_TR_TABLE_NAME = 'trackrecord135trial' # DBの対戦結果テーブル名
 WEB_SERVICE_NAME = 'Tenco!'  # サーバ側のサービス名
 
@@ -357,6 +361,7 @@ begin
     loop do
       puts "リプレイファイルを公開する場合は「1」、公開しない場合は「2」を入力してください。"
       puts "公開する設定にすると、自動的にランダムでリプレイファイルが公開されます。"
+      puts "リプレイファイル中のプロフィール名・アイコンはすべて匿名化されます。"
       puts "公開されるのは、報告のたびにランダムで１ファイルのみです。"
       print "> "
       input = gets.strip
@@ -498,139 +503,35 @@ begin
         puts "！#{replay_config_path} が見つかりません。リプレイファイル送信をスキップします。"
         is_warning_exist = true
       else
-        
-        # ゲーム側のリプレイファイル名のフォーマット設定を取得
-        def get_replay_format(replay_config_path)
-          replay_format = nil
-          File.open(replay_config_path, "r") do |io|
-            while (line = io.gets) do
-              if line.strip =~ /\Afile_vs="?([^"]+)"?\z/ then
-                replay_format = $1
-                break
-              end
-            end
-          end
-          replay_format
-        end
-        
-        # 対戦結果に対応する対戦結果とリプレイファイルパスを取得
-        # file_num を上限個数とする
-        def get_replay_files(trackrecords, replay_config_path, file_num)
-          replay_format = get_replay_format(replay_config_path)
-          #日付記号　%year %month %day
-          #日付一括記号　%yymmdd %mmdd
-          #時刻記号　%hour %min %sec
-          #時刻一括記号　%hhmmss %hhmm
-          #使用プロファイル　%p1 %p2
-          #使用キャラクター　%c1 %c2
-          #日付記号　%y %m %d (天則:実装しない)
-          #時刻記号　%h %min %sec (天則:実装しない)
-          pattern = /%(year|month|day|yymmdd|yymm|hour|min|sec|hhmmss|hhmm|p1|p2|c1|c2)/
-          replay_files = []
-          trackrecords.shuffle.each do |tr|
-            tr_time = Time.parse(tr['timestamp'])
-            tr_replay_files = [tr_time - 15, tr_time, tr_time + 15].map do |time|
-              conversion = {
-                "%year"   => time.year.to_s[2..3],
-                "%month"  => sprintf("%02d", time.month),
-                "%day"    => sprintf("%02d", time.day),
-                "%yymm"   => time.year.to_s[2..3] + sprintf("%02d", time.month),
-                "%yymmdd" => time.year.to_s[2..3] + sprintf("%02d", time.month) + sprintf("%02d", time.day),
-                "%hour"   => sprintf("%02d", time.hour),
-                "%min"    => sprintf("%02d", time.min),
-                "%sec"    => "*", # 結果記録とリプレイファイルのタイムスタンプは7秒くらいはずれる
-                "%hhmm"   => sprintf("%02d", time.hour) + sprintf("%02d", time.min),
-                "%hhmmss" => sprintf("%02d", time.hour) + sprintf("%02d", time.min) + "*",
-                "%p1" => tr['p1name'],
-                "%p2" => tr['p2name'],
-                "%c1" => "*",
-                "%c2" => "*"
-              }
-              replay_file_pattern = replay_format.gsub(pattern) { |str| conversion[str] }
-              replay_file_pattern = "#{File.dirname(replay_config_path)}\\replay\\#{replay_file_pattern}*"
-              replay_file_pattern.gsub!("\\", "/")
-              replay_file_pattern.gsub!(/\*+/, "*")
-              replay_file_pattern_cp932 = NKF.nkf('-sWxm0 --cp932', replay_file_pattern)
-              Dir.glob(replay_file_pattern_cp932)
-            end
-            
-            tr_replay_files.flatten!.uniq!
-            if !tr_replay_files[0].nil? then
-              replay_files.push({ :trackrecord => tr, :path => tr_replay_files[0] })
-              if replay_files.length >= file_num then
-                replay_files = replay_files[0..(file_num - 1)]
-                break
-              end
-            else
-              puts "リプレイファイルが見つけられませんでした。"
-            end
-            
-          end
-          replay_files
-        end
-        
-        def send_replay(replay_files, account_name, account_password, game_id)
+
+        def send_replay(replay_files, game_id, account_name, account_password)
           replay_files.each do |replay_file|
             print "送信リプレイファイル: "
             puts "#{replay_file[:path]}"
             trackrecord = replay_file[:trackrecord]
             replay_path = replay_file[:path]
-            replay_body = nil
+            http_multipart_data = {}
             
-            # XML生成
-            xml = REXML::Document.new
-            xml << REXML::XMLDecl.new('1.0', 'UTF-8')
+            puts "送信データ作成・リプレイファイル暗号化..."
             
-            # trackrecordPosting 要素生成
-            root = xml.add_element('replayPosting')
+            # 送信データ作成
+            replay_posting_xml = make_replay_posting_xml(trackrecord, game_id, account_name, account_password)
+            http_multipart_data[:meta_info] = replay_posting_xml
+            http_multipart_data[:replay_file] = mask_replay_data(File.open(replay_path, "rb") { |io| io.read })
             
-            # account 要素生成
-            account_element = root.add_element('account')
-            account_element.add_element('name').add_text(account_name.to_s)
-            account_element.add_element('password').add_text(account_password.to_s)
-            
-            # game 要素生成
-            game_element = root.add_element('game')
-            game_element.add_element('id').add_text(game_id.to_s)
-            
-            # trackrecord 要素生成
-            trackrecord_element = game_element.add_element('trackrecord')
-            trackrecord_element.add_element('timestamp').add_text(trackrecord['timestamp'].to_s)
-            trackrecord_element.add_element('p1name').add_text(trackrecord['p1name'].to_s)
-            trackrecord_element.add_element('p1type').add_text(trackrecord['p1id'].to_s)
-            trackrecord_element.add_element('p1point').add_text(trackrecord['p1win'].to_s)
-            trackrecord_element.add_element('p2name').add_text(trackrecord['p2name'].to_s)
-            trackrecord_element.add_element('p2type').add_text(trackrecord['p2id'].to_s)
-            trackrecord_element.add_element('p2point').add_text(trackrecord['p2win'].to_s)
-            
-            # ボディ部
-            boundary = "#{("0".."9").to_a.shuffle.join}"
-            post_body = ""
-            # 対戦情報
-            post_body += "--#{boundary}\r\n"
-            post_body += "content-disposition: form-data; name=\"meta_info\"\r\n"
-            post_body += "\r\n"
-            post_body += "#{xml.to_s}\r\n"
-            # リプレイファイル
-            post_body += "--#{boundary}\r\n"
-            post_body += "content-disposition: form-data; name=\"replay_file\"; filename=\"#{NKF.nkf('-Swxm0 --cp932', File.basename(replay_path))}\"\r\n"
-            post_body += "\r\n"
-            post_body += "#{File.open(replay_path, "rb") { |io| io.read }}\r\n"
-            # 終端
-            post_body += "--#{boundary}--\r\n"
+            # HTTP Multipart 用のリクエストボディ・リクエストヘッダ取得
+            request_data = make_http_multipart_data(http_multipart_data)
+            request_body = request_data[:body]
+            request_header = HTTP_REQUEST_HEADER.merge(request_data[:header])
             
             # デバッグ用保存
-            File.open("last_replay_body.dat","wb") { |io| io.write post_body }
-            
-            # ヘッダー部
-            request_header = HTTP_REQUEST_HEADER
-            request_header["content-type"] = "multipart/form-data; boundary=#{boundary}"
-            request_header["content-length"] = post_body.bytesize.to_s
+            File.open("last_replay_body.dat","wb") { |io| io.write request_body }
             
             # データ送信
+            puts "サーバーにリプレイファイルを送信..."
             response = nil
             Net::HTTP.new(SERVER_REPLAY_UPLOAD_HOST, 80).start do |s|
-              response = s.post(SERVER_REPLAY_UPLOAD_PATH, post_body, request_header)
+              response = s.post(SERVER_REPLAY_UPLOAD_PATH, request_body, request_header)
             end
 
             # 送信結果表示
@@ -645,8 +546,11 @@ begin
         end
         
         replay_files = get_replay_files(trackrecords, replay_config_path, send_replay_file_num)
-        send_replay(replay_files, account_name, account_password, game_id)
-
+        if replay_files.length > 0 then
+          send_replay(replay_files, game_id, account_name, account_password)
+        else
+          puts "リプレイファイルが見つけられませんでした。"
+        end
       end
     end
   
