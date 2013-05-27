@@ -362,7 +362,7 @@ begin
       puts "リプレイファイルを公開する場合は「1」、公開しない場合は「2」を入力してください。"
       puts "公開する設定にすると、自動的にランダムでリプレイファイルが公開されます。"
       puts "リプレイファイル中のプロフィール名・アイコンはすべて匿名化されます。"
-      puts "公開されるのは、報告のたびにランダムで１ファイルのみです。"
+      puts "公開されるのは、報告のたびにランダムで1ファイルのみです。"
       print "> "
       input = gets.strip
       if input == "1"
@@ -379,7 +379,7 @@ begin
     
     if is_send_replay then
       loop do
-        puts "#{GAME_NAME}の#{GAME_REPLAY_CONFIG_FILE_NAME}ファイルをこのウィンドウにドラッグアンドドロップし、Enterを入力してください。"
+        puts "#{GAME_NAME}フォルダの #{GAME_REPLAY_CONFIG_FILE_NAME} ファイルをこのウィンドウにドラッグアンドドロップし、Enterを入力してください。"
         print "> "
         input = gets.strip.gsub("\"", "")
         if File.file?(input)
