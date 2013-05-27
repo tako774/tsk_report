@@ -155,7 +155,7 @@ http://www.ruby-lang.org/ja/
 ○謝辞
 プレイヤーの皆様
 綺録帖を制作したさくらゆきかぜさん（@s_yukikaze）
-アイコン作成予定の黒幕さん（@_KuroNoir）
+アイコン作成の黒幕さん（@_KuroNoir）
 Tenco!ユーザーの皆様
 黄昏フロンティアの皆様
 
