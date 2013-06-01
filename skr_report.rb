@@ -301,7 +301,6 @@ begin
 
       puts "★設定ファイル編集\n"
       puts "#{WEB_SERVICE_NAME} アカウント名とパスワードを設定します"
-      puts "※アカウント名とパスワードが分からない場合、ご利用の#{WEB_SERVICE_NAME}クライアント（#{PAST_PROGRAM_NAME}等）の#{save_config_file}で確認できます"
       puts
 
       # アカウント名入力
@@ -322,19 +321,21 @@ begin
         puts "パスワードを入力してください"
         print "パスワード> "
         input = gets.strip
-        account_password = Digest::SHA1.hexdigest(input)
-        # パスワード確認入力
-        print "パスワード（確認）> "
-        input = gets.strip
-        if (account_password == Digest::SHA1.hexdigest(input)) then
-          if input !~ PASSWORD_REGEX then
-            # puts "パスワードは、8～16文字以内が推奨です"
-            # TODO: パスワード変更ウィザード
+        if input != "" then
+          account_password = Digest::SHA1.hexdigest(input)
+          # パスワード確認入力
+          print "パスワード（確認）> "
+          input = gets.strip
+          if (account_password == Digest::SHA1.hexdigest(input)) then
+            if input !~ PASSWORD_REGEX then
+              # puts "パスワードは、8～16文字以内が推奨です"
+              # TODO: パスワード変更ウィザード
+            end
+            puts
+            break
+          else
+            puts "！パスワードが一致しません\n"
           end
-          puts
-          break
-        else
-          puts "！パスワードが一致しません\n"
         end
         puts
       end
