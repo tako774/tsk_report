@@ -26,6 +26,9 @@ module TencoReport
         w.puts "# #{PROGRAM_NAME}設定ファイル"
         w.puts "# かならず文字コードは UTF-8 または UTF-8N で保存してください。"
         w.puts "# メモ帳でも編集・保存できます。"
+        w.puts "# 注）パスワードは暗号化して保存するようになりました。"
+        w.puts "# 　　パスワードを変更は、config.yaml をリネームまたは削除してから"
+        w.puts "# 　　報告ツールを実行し、登録済みのアカウントを設定することで行えます"
         w.puts config.to_yaml
       end
     end
