@@ -188,7 +188,7 @@ module TencoReporter
       # account 要素生成
       account_element = root.add_element('account')
       account_element.add_element('name').add_text(account_name.to_s)
-      account_element.add_element('password').add_text(Digest::SHA1.hexdigest(account_password.to_s))
+      account_element.add_element('password').add_text(account_password.to_s)
       
       # game 要素生成
       game_element = root.add_element('game')

@@ -4,6 +4,9 @@
 --- 
 account: 
   name: 
-  password: 
+  password_hash: 
+replay: 
+  is_send_replay: 
+  config_path: 
 database: 
   file_path: ../*.db
