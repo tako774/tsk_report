@@ -17,7 +17,7 @@ include TencoReporter::TrackRecordUtil
 require './lib/tenco_reporter/stdout_to_cp932_converter'
 
 # プログラム情報
-PROGRAM_VERSION = '0.05'
+PROGRAM_VERSION = '0.05b'
 PROGRAM_NAME = '天則観報告ツール'
 PAST_PROGRAM_NAME = '緋行跡報告ツール'
 GAME_NAME = '東方非想天則'
@@ -558,7 +558,8 @@ begin
         
         # ゲーム側のリプレイファイル名のフォーマット設定を取得
         def get_replay_format(replay_config_path)
-          replay_format = nil
+ 		  # th123 では file_vs の設定値がデフォルトだと空欄であり、その場合下記となる
+          replay_format = '%y%m%d_%h%min_%c1_%c2'
           File.open(replay_config_path, "r") do |io|
             while (line = io.gets) do
               if line.strip =~ /^file_vs=(.+)$/ then
